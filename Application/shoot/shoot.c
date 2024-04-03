@@ -29,16 +29,17 @@ void ShootInit()
         },
         .controller_param_init_config = {
             .speed_PID = {
-                .Kp            = 0, // 20
+                .Kp            = 1, // 20
                 .Ki            = 0, // 1
                 .Kd            = 0,
-                .Improve       = PID_Integral_Limit,
+                .Derivative_LPF_RC = 0.02,
+                .Improve       = PID_Integral_Limit | PID_Trapezoid_Intergral | PID_DerivativeFilter,
                 .IntegralLimit = 10000,
                 .MaxOut        = 15000,
             },
             .current_PID = {
-                .Kp            = 0, // 0.7
-                .Ki            = 0, // 0.1
+                .Kp            = 1.5, // 0.7
+                .Ki            = 0,   // 0.1
                 .Kd            = 0,
                 .Improve       = PID_Integral_Limit,
                 .IntegralLimit = 10000,
@@ -70,22 +71,22 @@ void ShootInit()
         .controller_param_init_config = {
             .angle_PID = {
                 // 如果启用位置环来控制发弹,需要较大的I值保证输出力矩的线性度否则出现接近拨出的力矩大幅下降
-                .Kp     = 0, // 10
+                .Kp     = 10, // 10
                 .Ki     = 0,
                 .Kd     = 0,
                 .MaxOut = 200,
             },
             .speed_PID = {
-                .Kp            = 0, // 10
-                .Ki            = 0, // 1
+                .Kp            = 10, // 10
+                .Ki            = 1,  // 1
                 .Kd            = 0,
                 .Improve       = PID_Integral_Limit,
                 .IntegralLimit = 5000,
                 .MaxOut        = 5000,
             },
             .current_PID = {
-                .Kp            = 0, // 0.7
-                .Ki            = 0, // 0.1
+                .Kp            = 0.7, // 0.7
+                .Ki            = 0,   // 0.1
                 .Kd            = 0,
                 .Improve       = PID_Integral_Limit,
                 .IntegralLimit = 5000,
@@ -102,9 +103,10 @@ void ShootInit()
     };
     loader = DJIMotorInit(&loader_config);
 
-    loader_config.can_init_config.tx_id                          = 4; // 摩擦轮限位电机
-    loader_config.controller_setting_init_config.outer_loop_type = ANGLE_LOOP;
-    friction_limit                                               = DJIMotorInit(&loader_config);
+    loader_config.can_init_config.tx_id                             = 4; // 摩擦轮限位电机
+    loader_config.controller_setting_init_config.outer_loop_type    = SPEED_LOOP;
+    loader_config.controller_setting_init_config.motor_reverse_flag = MOTOR_DIRECTION_REVERSE;
+    friction_limit                                                  = DJIMotorInit(&loader_config);
 
     KEY_Config_s key_config = {
         .gpio_config = {
@@ -139,11 +141,11 @@ void ShootTask()
     // }
 
     // 微动开关控制限位电机,当微动开关触发时,限位电机启动,否则关闭
-    if (!loader_key->state){
-        DJIMotorOuterLoop(friction_limit, SPEED_LOOP);
+    if (!loader_key->state) {
         DJIMotorSetRef(friction_limit, 1000);
-    }else{
-        DJIMotorOuterLoop(friction_limit, ANGLE_LOOP);
-        DJIMotorSetRef(friction_limit, friction_limit->measure.total_angle);
+    } else {
+        DJIMotorSetRef(friction_limit, 0);
     }
+    DJIMotorSetRef(friction_l, 30000);
+    DJIMotorSetRef(friction_r, 30000);
 }
