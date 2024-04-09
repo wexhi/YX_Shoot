@@ -29,13 +29,13 @@ void ShootInit()
         },
         .controller_param_init_config = {
             .speed_PID = {
-                .Kp            = 1, // 20
-                .Ki            = 0, // 1
-                .Kd            = 0,
+                .Kp                = 1, // 20
+                .Ki                = 0, // 1
+                .Kd                = 0,
                 .Derivative_LPF_RC = 0.02,
-                .Improve       = PID_Integral_Limit | PID_Trapezoid_Intergral | PID_DerivativeFilter,
-                .IntegralLimit = 10000,
-                .MaxOut        = 15000,
+                .Improve           = PID_Integral_Limit | PID_Trapezoid_Intergral | PID_DerivativeFilter,
+                .IntegralLimit     = 10000,
+                .MaxOut            = 15000,
             },
             .current_PID = {
                 .Kp            = 1.5, // 0.7
@@ -96,7 +96,7 @@ void ShootInit()
         .controller_setting_init_config = {
             .angle_feedback_source = MOTOR_FEED, .speed_feedback_source = MOTOR_FEED,
             .outer_loop_type    = SPEED_LOOP, // 初始化成SPEED_LOOP,让拨盘停在原地,防止拨盘上电时乱转
-            .close_loop_type    = CURRENT_LOOP | SPEED_LOOP,
+            .close_loop_type    = CURRENT_LOOP | SPEED_LOOP | ANGLE_LOOP,
             .motor_reverse_flag = MOTOR_DIRECTION_NORMAL, // 注意方向设置为拨盘的拨出的击发方向
         },
         .motor_type = M2006 // 英雄使用m3508
@@ -144,7 +144,9 @@ void ShootTask()
     if (!loader_key->state) {
         DJIMotorSetRef(friction_limit, 1000);
     } else {
-        DJIMotorSetRef(friction_limit, 0);
+        // DJIMotorSetRef(friction_limit, 0);
+        DJIMotorOuterLoop(friction_limit, ANGLE_LOOP);
+        DJIMotorSetRef(friction_limit, -1000);
     }
     DJIMotorSetRef(friction_l, 30000);
     DJIMotorSetRef(friction_r, 30000);
